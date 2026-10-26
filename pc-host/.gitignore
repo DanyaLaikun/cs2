@@ -1,0 +1,9 @@
+# Local settings: contains the GSI auth token
+config.json
+
+# Valve radar assets extracted from your own game install
+radars/*
+!radars/README.md
+
+__pycache__/
+*.pyc

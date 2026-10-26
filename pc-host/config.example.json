@@ -1,0 +1,19 @@
+{
+  "_comment": "Copy to config.json, or run `python -m telemetry_host install-cfg`, which creates it and generates the GSI token.",
+  "gsi": {
+    "host": "127.0.0.1",
+    "port": 3000,
+    "token": ""
+  },
+  "bridge": {
+    "host": "127.0.0.1",
+    "port": 8090,
+    "token": "",
+    "max_hz": 30,
+    "heartbeat_sec": 2.0,
+    "max_clients": 8
+  },
+  "radar_dir": "radars",
+  "maps_file": "maps.json",
+  "log_level": "INFO"
+}

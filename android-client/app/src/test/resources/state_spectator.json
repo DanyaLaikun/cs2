@@ -1,0 +1,702 @@
+{
+  "t": "state",
+  "seq": 1,
+  "d": {
+    "mode": "spectator",
+    "provider": {
+      "name": "Counter-Strike: Global Offensive",
+      "steamId": "76561198999999999",
+      "version": 14100,
+      "ts": 1793056731
+    },
+    "map": {
+      "name": "de_dust2",
+      "mode": "competitive",
+      "phase": "live",
+      "round": 0,
+      "ct": {
+        "score": 0,
+        "losses": 0,
+        "timeouts": 1,
+        "seriesWins": 0
+      },
+      "t": {
+        "score": 0,
+        "losses": 0,
+        "timeouts": 1,
+        "seriesWins": 0
+      },
+      "radar": {
+        "posX": -2476.0,
+        "posY": 3239.0,
+        "scale": 4.4,
+        "image": "de_dust2"
+      }
+    },
+    "round": {
+      "phase": "live"
+    },
+    "phase": {
+      "name": "live",
+      "endsIn": 49.0
+    },
+    "focus": "76561198000000005",
+    "players": [
+      {
+        "id": "76561198000000001",
+        "name": "Kestrel",
+        "team": "T",
+        "slot": 1,
+        "hp": 100,
+        "armor": 100,
+        "helmet": true,
+        "flashed": 0,
+        "smoked": 0,
+        "burning": 0,
+        "money": 4050,
+        "equip": 5200,
+        "roundKills": 0,
+        "roundHs": 0,
+        "roundDmg": 0,
+        "kills": 0,
+        "assists": 0,
+        "deaths": 0,
+        "mvps": 0,
+        "score": 0,
+        "pos": [
+          624,
+          274,
+          96
+        ],
+        "yaw": -99.7,
+        "pitch": 0.0,
+        "weapons": [
+          {
+            "name": "knife_t",
+            "type": "Knife",
+            "state": "holstered"
+          },
+          {
+            "name": "glock",
+            "type": "Pistol",
+            "state": "holstered",
+            "clip": 12,
+            "clipMax": 12,
+            "reserve": 24
+          },
+          {
+            "name": "ak47",
+            "type": "Rifle",
+            "state": "active",
+            "clip": 25,
+            "clipMax": 30,
+            "reserve": 90
+          },
+          {
+            "name": "flashbang",
+            "type": "Grenade",
+            "state": "holstered",
+            "reserve": 2
+          },
+          {
+            "name": "c4",
+            "type": "C4",
+            "state": "holstered"
+          }
+        ]
+      },
+      {
+        "id": "76561198000000002",
+        "name": "Vanta",
+        "team": "T",
+        "slot": 2,
+        "hp": 100,
+        "armor": 100,
+        "helmet": true,
+        "flashed": 0,
+        "smoked": 0,
+        "burning": 0,
+        "money": 2200,
+        "equip": 5200,
+        "roundKills": 0,
+        "roundHs": 0,
+        "roundDmg": 0,
+        "kills": 0,
+        "assists": 0,
+        "deaths": 0,
+        "mvps": 0,
+        "score": 0,
+        "pos": [
+          -451,
+          440,
+          96
+        ],
+        "yaw": -61.4,
+        "pitch": 0.0,
+        "weapons": [
+          {
+            "name": "knife_t",
+            "type": "Knife",
+            "state": "holstered"
+          },
+          {
+            "name": "glock",
+            "type": "Pistol",
+            "state": "holstered",
+            "clip": 12,
+            "clipMax": 12,
+            "reserve": 24
+          },
+          {
+            "name": "ak47",
+            "type": "Rifle",
+            "state": "active",
+            "clip": 25,
+            "clipMax": 30,
+            "reserve": 90
+          },
+          {
+            "name": "flashbang",
+            "type": "Grenade",
+            "state": "holstered",
+            "reserve": 2
+          }
+        ]
+      },
+      {
+        "id": "76561198000000003",
+        "name": "Moro",
+        "team": "T",
+        "slot": 3,
+        "hp": 100,
+        "armor": 100,
+        "helmet": true,
+        "flashed": 0,
+        "smoked": 0,
+        "burning": 0,
+        "money": 2200,
+        "equip": 5200,
+        "roundKills": 0,
+        "roundHs": 0,
+        "roundDmg": 0,
+        "kills": 0,
+        "assists": 0,
+        "deaths": 0,
+        "mvps": 0,
+        "score": 0,
+        "pos": [
+          -808,
+          -299,
+          96
+        ],
+        "yaw": -86.0,
+        "pitch": 0.0,
+        "weapons": [
+          {
+            "name": "knife_t",
+            "type": "Knife",
+            "state": "holstered"
+          },
+          {
+            "name": "glock",
+            "type": "Pistol",
+            "state": "holstered",
+            "clip": 12,
+            "clipMax": 12,
+            "reserve": 24
+          },
+          {
+            "name": "galilar",
+            "type": "Rifle",
+            "state": "active",
+            "clip": 25,
+            "clipMax": 30,
+            "reserve": 90
+          },
+          {
+            "name": "flashbang",
+            "type": "Grenade",
+            "state": "holstered",
+            "reserve": 2
+          }
+        ]
+      },
+      {
+        "id": "76561198000000004",
+        "name": "Ditch",
+        "team": "T",
+        "slot": 4,
+        "hp": 100,
+        "armor": 100,
+        "helmet": true,
+        "flashed": 0,
+        "smoked": 0,
+        "burning": 0,
+        "money": 4050,
+        "equip": 5200,
+        "roundKills": 0,
+        "roundHs": 0,
+        "roundDmg": 0,
+        "kills": 0,
+        "assists": 0,
+        "deaths": 0,
+        "mvps": 0,
+        "score": 0,
+        "pos": [
+          -1023,
+          180,
+          96
+        ],
+        "yaw": 140.4,
+        "pitch": 0.0,
+        "weapons": [
+          {
+            "name": "knife_t",
+            "type": "Knife",
+            "state": "holstered"
+          },
+          {
+            "name": "glock",
+            "type": "Pistol",
+            "state": "holstered",
+            "clip": 12,
+            "clipMax": 12,
+            "reserve": 24
+          },
+          {
+            "name": "ak47",
+            "type": "Rifle",
+            "state": "active",
+            "clip": 25,
+            "clipMax": 30,
+            "reserve": 90
+          },
+          {
+            "name": "flashbang",
+            "type": "Grenade",
+            "state": "holstered",
+            "reserve": 2
+          }
+        ]
+      },
+      {
+        "id": "76561198000000005",
+        "name": "Pillar",
+        "team": "T",
+        "slot": 5,
+        "hp": 100,
+        "armor": 100,
+        "helmet": true,
+        "flashed": 0,
+        "smoked": 0,
+        "burning": 0,
+        "money": 2200,
+        "equip": 5200,
+        "roundKills": 0,
+        "roundHs": 0,
+        "roundDmg": 0,
+        "kills": 0,
+        "assists": 0,
+        "deaths": 0,
+        "mvps": 0,
+        "score": 0,
+        "pos": [
+          593,
+          129,
+          96
+        ],
+        "yaw": -141.9,
+        "pitch": 0.0,
+        "weapons": [
+          {
+            "name": "knife_t",
+            "type": "Knife",
+            "state": "holstered"
+          },
+          {
+            "name": "glock",
+            "type": "Pistol",
+            "state": "holstered",
+            "clip": 12,
+            "clipMax": 12,
+            "reserve": 24
+          },
+          {
+            "name": "awp",
+            "type": "Rifle",
+            "state": "active",
+            "clip": 25,
+            "clipMax": 30,
+            "reserve": 90
+          },
+          {
+            "name": "flashbang",
+            "type": "Grenade",
+            "state": "holstered",
+            "reserve": 2
+          }
+        ],
+        "activity": "playing"
+      },
+      {
+        "id": "76561198000000010",
+        "name": "Halcyon",
+        "team": "CT",
+        "slot": 6,
+        "hp": 100,
+        "armor": 100,
+        "helmet": true,
+        "defuser": true,
+        "flashed": 0,
+        "smoked": 0,
+        "burning": 0,
+        "money": 2200,
+        "equip": 5200,
+        "roundKills": 0,
+        "roundHs": 0,
+        "roundDmg": 0,
+        "kills": 0,
+        "assists": 0,
+        "deaths": 0,
+        "mvps": 0,
+        "score": 0,
+        "pos": [
+          1460,
+          1587,
+          96
+        ],
+        "yaw": -75.2,
+        "pitch": 0.0,
+        "weapons": [
+          {
+            "name": "knife",
+            "type": "Knife",
+            "state": "holstered"
+          },
+          {
+            "name": "usp_silencer",
+            "type": "Pistol",
+            "state": "holstered",
+            "clip": 12,
+            "clipMax": 12,
+            "reserve": 24
+          },
+          {
+            "name": "m4a1_silencer",
+            "type": "Rifle",
+            "state": "active",
+            "clip": 25,
+            "clipMax": 30,
+            "reserve": 90
+          },
+          {
+            "name": "flashbang",
+            "type": "Grenade",
+            "state": "holstered",
+            "reserve": 2
+          }
+        ]
+      },
+      {
+        "id": "76561198000000011",
+        "name": "Brisk",
+        "team": "CT",
+        "slot": 7,
+        "hp": 100,
+        "armor": 100,
+        "helmet": true,
+        "flashed": 0,
+        "smoked": 0,
+        "burning": 0,
+        "money": 2200,
+        "equip": 5200,
+        "roundKills": 0,
+        "roundHs": 0,
+        "roundDmg": 0,
+        "kills": 0,
+        "assists": 0,
+        "deaths": 0,
+        "mvps": 0,
+        "score": 0,
+        "pos": [
+          660,
+          1942,
+          96
+        ],
+        "yaw": -16.3,
+        "pitch": 0.0,
+        "weapons": [
+          {
+            "name": "knife",
+            "type": "Knife",
+            "state": "holstered"
+          },
+          {
+            "name": "usp_silencer",
+            "type": "Pistol",
+            "state": "holstered",
+            "clip": 12,
+            "clipMax": 12,
+            "reserve": 24
+          },
+          {
+            "name": "m4a1",
+            "type": "Rifle",
+            "state": "active",
+            "clip": 25,
+            "clipMax": 30,
+            "reserve": 90
+          },
+          {
+            "name": "flashbang",
+            "type": "Grenade",
+            "state": "holstered",
+            "reserve": 2
+          }
+        ]
+      },
+      {
+        "id": "76561198000000012",
+        "name": "Oslo",
+        "team": "CT",
+        "slot": 8,
+        "hp": 100,
+        "armor": 100,
+        "helmet": true,
+        "defuser": true,
+        "flashed": 0,
+        "smoked": 0,
+        "burning": 0,
+        "money": 2700,
+        "equip": 5200,
+        "roundKills": 0,
+        "roundHs": 0,
+        "roundDmg": 0,
+        "kills": 0,
+        "assists": 0,
+        "deaths": 0,
+        "mvps": 0,
+        "score": 0,
+        "pos": [
+          -1042,
+          2092,
+          96
+        ],
+        "yaw": 148.5,
+        "pitch": 0.0,
+        "weapons": [
+          {
+            "name": "knife",
+            "type": "Knife",
+            "state": "holstered"
+          },
+          {
+            "name": "usp_silencer",
+            "type": "Pistol",
+            "state": "holstered",
+            "clip": 12,
+            "clipMax": 12,
+            "reserve": 24
+          },
+          {
+            "name": "famas",
+            "type": "Rifle",
+            "state": "active",
+            "clip": 25,
+            "clipMax": 30,
+            "reserve": 90
+          },
+          {
+            "name": "flashbang",
+            "type": "Grenade",
+            "state": "holstered",
+            "reserve": 2
+          }
+        ]
+      },
+      {
+        "id": "76561198000000013",
+        "name": "Quill",
+        "team": "CT",
+        "slot": 9,
+        "hp": 100,
+        "armor": 100,
+        "helmet": true,
+        "flashed": 0,
+        "smoked": 0,
+        "burning": 0,
+        "money": 4050,
+        "equip": 5200,
+        "roundKills": 0,
+        "roundHs": 0,
+        "roundDmg": 0,
+        "kills": 0,
+        "assists": 0,
+        "deaths": 0,
+        "mvps": 0,
+        "score": 0,
+        "pos": [
+          -112,
+          1643,
+          96
+        ],
+        "yaw": 60.3,
+        "pitch": 0.0,
+        "weapons": [
+          {
+            "name": "knife",
+            "type": "Knife",
+            "state": "holstered"
+          },
+          {
+            "name": "usp_silencer",
+            "type": "Pistol",
+            "state": "holstered",
+            "clip": 12,
+            "clipMax": 12,
+            "reserve": 24
+          },
+          {
+            "name": "awp",
+            "type": "Rifle",
+            "state": "active",
+            "clip": 25,
+            "clipMax": 30,
+            "reserve": 90
+          },
+          {
+            "name": "flashbang",
+            "type": "Grenade",
+            "state": "holstered",
+            "reserve": 2
+          }
+        ]
+      },
+      {
+        "id": "76561198000000014",
+        "name": "Ember",
+        "team": "CT",
+        "slot": 0,
+        "hp": 31,
+        "armor": 100,
+        "helmet": true,
+        "defuser": true,
+        "flashed": 0,
+        "smoked": 0,
+        "burning": 0,
+        "money": 2200,
+        "equip": 5200,
+        "roundKills": 0,
+        "roundHs": 0,
+        "roundDmg": 0,
+        "kills": 0,
+        "assists": 0,
+        "deaths": 0,
+        "mvps": 0,
+        "score": 0,
+        "pos": [
+          -754,
+          2447,
+          96
+        ],
+        "yaw": -173.1,
+        "pitch": 0.0,
+        "weapons": [
+          {
+            "name": "knife",
+            "type": "Knife",
+            "state": "holstered"
+          },
+          {
+            "name": "usp_silencer",
+            "type": "Pistol",
+            "state": "holstered",
+            "clip": 12,
+            "clipMax": 12,
+            "reserve": 24
+          },
+          {
+            "name": "m4a1",
+            "type": "Rifle",
+            "state": "active",
+            "clip": 25,
+            "clipMax": 30,
+            "reserve": 90
+          },
+          {
+            "name": "flashbang",
+            "type": "Grenade",
+            "state": "holstered",
+            "reserve": 2
+          }
+        ]
+      }
+    ],
+    "bomb": {
+      "state": "carried",
+      "pos": [
+        624,
+        274,
+        96
+      ],
+      "carrier": "76561198000000001"
+    },
+    "grenades": [
+      {
+        "id": "101",
+        "type": "smoke",
+        "owner": "76561198000000013",
+        "pos": [
+          -408,
+          1127,
+          0
+        ],
+        "life": 16.0,
+        "effect": 14.5
+      },
+      {
+        "id": "102",
+        "type": "inferno",
+        "owner": "76561198000000003",
+        "life": 4.0,
+        "flames": [
+          [
+            -1592,
+            2293,
+            0
+          ],
+          [
+            -1618,
+            2348,
+            0
+          ],
+          [
+            -1678,
+            2361,
+            0
+          ],
+          [
+            -1725,
+            2323,
+            0
+          ],
+          [
+            -1725,
+            2262,
+            0
+          ],
+          [
+            -1677,
+            2225,
+            0
+          ],
+          [
+            -1618,
+            2239,
+            0
+          ]
+        ]
+      }
+    ]
+  }
+}

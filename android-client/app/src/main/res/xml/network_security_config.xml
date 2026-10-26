@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The app only talks to the PC host: over the adb reverse tunnel (127.0.0.1) or, in
+  tethering mode, the PC's address on the USB/LAN link. Both are plain ws:// and http://
+  on a private link whose address the user types in, so cleartext is permitted.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
