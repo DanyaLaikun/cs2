@@ -9,16 +9,25 @@
  *     and no elevated rights.
  */
 
-#define INTEGRITY_GUARD_EXPORTS
-#define STRICT
-#define WIN32_LEAN_AND_MEAN
-#define _CRT_SECURE_NO_WARNINGS
+#ifndef INTEGRITY_GUARD_EXPORTS
+#  define INTEGRITY_GUARD_EXPORTS
+#endif
+#ifndef STRICT
+#  define STRICT
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#  define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef _CRT_SECURE_NO_WARNINGS
+#  define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #include "integrity_guard.h"
 
 #include <windows.h>
 #include <winreg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 // ── DllMain ────────────────────────────────────────────────────────────────────
