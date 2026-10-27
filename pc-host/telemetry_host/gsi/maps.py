@@ -36,24 +36,36 @@ class MapCatalog:
         return cls(data)
 
     def lookup(self, map_name: str) -> dict[str, Any] | None:
-        key = map_name.lower()
-        exact = self._radar.get(key)
-        if exact is not None:
-            return exact
-        # Prefix fallback for workshop variants: "de_mirage_ce" → "de_mirage".
-        # Require an underscore boundary so "de_mi" does not match "de_mirage".
-        best = max(
-            (k for k in self._radar if key.startswith(k + "_")),
-            key=len,
-            default=None,
-        )
-        return self._radar[best] if best else None
+        # Try each name variant in order: original, then spaces→underscores.
+        # For each variant also try a prefix fallback ("de_mirage_ce" → "de_mirage").
+        for key in _name_variants(map_name.lower()):
+            hit = self._radar.get(key)
+            if hit is not None:
+                return hit
+            best = max(
+                (k for k in self._radar if key.startswith(k + "_")),
+                key=len,
+                default=None,
+            )
+            if best:
+                return self._radar[best]
+        return None
 
     def __len__(self) -> int:
         return len(self._radar)
 
     def __contains__(self, map_name: object) -> bool:
         return isinstance(map_name, str) and map_name.lower() in self._radar
+
+
+def _name_variants(name: str) -> list[str]:
+    """Return lookup keys to try: original, then with spaces replaced by underscores.
+
+    Workshop map names sometimes use spaces instead of underscores
+    (e.g. "de mirage" instead of "de_mirage").
+    """
+    normalised = name.replace(" ", "_")
+    return [name] if name == normalised else [name, normalised]
 
 
 def _parse_entry(name: str, entry: Any) -> dict[str, Any] | None:
