@@ -21,6 +21,7 @@ from typing import Callable
 
 from .environment import scan_running_processes
 from .events import EventKind, SecurityEventLog
+from .sysaudit import SystemSecurityProfile, audit_system
 
 log = logging.getLogger("telemetry_host.security")
 
@@ -48,6 +49,7 @@ class SecurityPolicy:
         self._faceit_procs: list[str] = []
         self._conflict_handlers: list[Callable[[], None]] = []
         self._scan_task: asyncio.Task[None] | None = None
+        self._sys_profile: SystemSecurityProfile | None = None
 
         self._event_log.record(
             EventKind.POLICY_INIT,
@@ -71,6 +73,11 @@ class SecurityPolicy:
     def detected_processes(self) -> list[str]:
         """Integrity-monitor processes found in the last scan."""
         return list(self._faceit_procs)
+
+    @property
+    def system_profile(self) -> "SystemSecurityProfile | None":
+        """Result of the last system security audit, or None before first start()."""
+        return self._sys_profile
 
     # ── Policy checks (called by other modules) ────────────────────────────────
 
@@ -188,7 +195,14 @@ class SecurityPolicy:
     # ── Lifecycle ──────────────────────────────────────────────────────────────
 
     async def start(self) -> None:
-        """Run an initial synchronous scan, then start the background scan loop."""
+        """Run a system audit and initial process scan, then start the background loop."""
+        profile = await asyncio.to_thread(audit_system)
+        self._sys_profile = profile
+        self._event_log.record(
+            EventKind.SYS_AUDIT,
+            f"System security audit: {profile.summary()}",
+            **profile.as_dict(),
+        )
         await asyncio.to_thread(self.do_scan)
         if self._scan_task is None or self._scan_task.done():
             self._scan_task = asyncio.get_event_loop().create_task(

@@ -21,6 +21,7 @@ class EventKind(enum.Enum):
     CONFLICT_DETECTED   = "conflict_detected"
     SHUTDOWN_INITIATED  = "shutdown_initiated"
     POLICY_VIOLATION    = "policy_violation"
+    SYS_AUDIT           = "sys_audit"
 
 
 @dataclass

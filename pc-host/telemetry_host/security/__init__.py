@@ -21,10 +21,13 @@ from __future__ import annotations
 
 from .events import EventKind, SecurityEvent, SecurityEventLog
 from .policy import SecurityPolicy
+from .sysaudit import SystemSecurityProfile, audit_system
 
 __all__ = [
     "SecurityPolicy",
     "SecurityEventLog",
     "SecurityEvent",
     "EventKind",
+    "SystemSecurityProfile",
+    "audit_system",
 ]

@@ -588,5 +588,172 @@ class TestAppSecurityIntegration(unittest.TestCase):
         self.assertTrue(len(created_tasks) > 0, "create_task should be called")
 
 
+# ── SystemSecurityProfile ─────────────────────────────────────────────────────
+
+class TestSystemSecurityProfile(unittest.TestCase):
+
+    def _make(self, **kw):
+        from telemetry_host.security.sysaudit import SystemSecurityProfile
+        defaults = dict(
+            secure_boot=None,
+            hvci_configured=None,
+            vbs_configured=None,
+            credential_guard=None,
+            sedebug_privilege=None,
+        )
+        defaults.update(kw)
+        return SystemSecurityProfile(**defaults)
+
+    def test_is_hardened_true_when_hvci_on(self):
+        p = self._make(hvci_configured=True)
+        self.assertTrue(p.is_hardened)
+
+    def test_is_hardened_true_when_vbs_on(self):
+        p = self._make(vbs_configured=True)
+        self.assertTrue(p.is_hardened)
+
+    def test_is_hardened_true_when_secure_boot_on(self):
+        p = self._make(secure_boot=True)
+        self.assertTrue(p.is_hardened)
+
+    def test_is_hardened_false_when_all_off(self):
+        p = self._make(
+            secure_boot=False,
+            hvci_configured=False,
+            vbs_configured=False,
+        )
+        self.assertFalse(p.is_hardened)
+
+    def test_is_hardened_false_when_all_none(self):
+        p = self._make()
+        self.assertFalse(p.is_hardened)
+
+    def test_summary_contains_all_keys(self):
+        p = self._make(secure_boot=True, hvci_configured=False)
+        s = p.summary()
+        self.assertIn("SecureBoot", s)
+        self.assertIn("HVCI", s)
+        self.assertIn("VBS", s)
+        self.assertIn("CredentialGuard", s)
+        self.assertIn("SeDebug", s)
+
+    def test_summary_shows_on_for_true(self):
+        p = self._make(secure_boot=True)
+        self.assertIn("SecureBoot=on", p.summary())
+
+    def test_summary_shows_off_for_false(self):
+        p = self._make(hvci_configured=False)
+        self.assertIn("HVCI=off", p.summary())
+
+    def test_summary_shows_question_for_none(self):
+        p = self._make()
+        self.assertIn("VBS=?", p.summary())
+
+    def test_as_dict_keys(self):
+        p = self._make(secure_boot=True)
+        d = p.as_dict()
+        for key in ("secure_boot", "hvci_configured", "vbs_configured",
+                    "credential_guard", "sedebug_privilege"):
+            self.assertIn(key, d)
+
+    def test_frozen_immutability(self):
+        p = self._make(secure_boot=True)
+        with self.assertRaises((AttributeError, TypeError)):
+            p.secure_boot = False  # type: ignore[misc]
+
+
+# ── audit_system ──────────────────────────────────────────────────────────────
+
+class TestAuditSystem(unittest.TestCase):
+
+    def test_returns_profile_instance(self):
+        from telemetry_host.security.sysaudit import audit_system, SystemSecurityProfile
+        p = audit_system()
+        self.assertIsInstance(p, SystemSecurityProfile)
+
+    @unittest.skipIf(sys.platform == "win32", "non-Windows stub test")
+    def test_all_none_on_non_windows(self):
+        from telemetry_host.security.sysaudit import audit_system
+        p = audit_system()
+        self.assertIsNone(p.secure_boot)
+        self.assertIsNone(p.hvci_configured)
+        self.assertIsNone(p.vbs_configured)
+        self.assertIsNone(p.credential_guard)
+        self.assertIsNone(p.sedebug_privilege)
+
+    def test_fields_are_bool_or_none(self):
+        from telemetry_host.security.sysaudit import audit_system
+        p = audit_system()
+        for val in p.as_dict().values():
+            self.assertIn(type(val), (bool, type(None)),
+                          f"unexpected type {type(val)} for {val!r}")
+
+    def test_reg_dword_returns_none_on_missing_key(self):
+        from telemetry_host.security.sysaudit import _reg_dword
+        result = _reg_dword(r"SOFTWARE\__nonexistent_key_xyz__", "Value")
+        self.assertIsNone(result)
+
+
+# ── SecurityPolicy — SYS_AUDIT integration ───────────────────────────────────
+
+class TestSecurityPolicySysAudit(unittest.IsolatedAsyncioTestCase):
+
+    def _make(self):
+        from telemetry_host.security.policy import SecurityPolicy
+        return SecurityPolicy()
+
+    async def test_system_profile_none_before_start(self):
+        p = self._make()
+        self.assertIsNone(p.system_profile)
+
+    async def test_system_profile_set_after_start(self):
+        from telemetry_host.security.sysaudit import SystemSecurityProfile
+        p = self._make()
+        with patch("telemetry_host.security.policy.scan_running_processes", return_value=[]):
+            await p.start()
+            await p.stop()
+        self.assertIsInstance(p.system_profile, SystemSecurityProfile)
+
+    async def test_sys_audit_event_logged_on_start(self):
+        from telemetry_host.security.events import EventKind
+        p = self._make()
+        with patch("telemetry_host.security.policy.scan_running_processes", return_value=[]):
+            await p.start()
+            await p.stop()
+        self.assertEqual(p.event_log.count(EventKind.SYS_AUDIT), 1)
+
+    async def test_sys_audit_event_has_profile_details(self):
+        from telemetry_host.security.events import EventKind
+        p = self._make()
+        with patch("telemetry_host.security.policy.scan_running_processes", return_value=[]):
+            await p.start()
+            await p.stop()
+        ev = p.event_log.last(EventKind.SYS_AUDIT)
+        self.assertIsNotNone(ev)
+        self.assertIn("secure_boot", ev.details)
+        self.assertIn("hvci_configured", ev.details)
+
+    async def test_audit_with_mocked_profile(self):
+        from telemetry_host.security.events import EventKind
+        from telemetry_host.security.sysaudit import SystemSecurityProfile
+        mock_profile = SystemSecurityProfile(
+            secure_boot=True,
+            hvci_configured=True,
+            vbs_configured=True,
+            credential_guard=False,
+            sedebug_privilege=False,
+        )
+        p = self._make()
+        with patch("telemetry_host.security.policy.audit_system", return_value=mock_profile), \
+             patch("telemetry_host.security.policy.scan_running_processes", return_value=[]):
+            await p.start()
+            await p.stop()
+        self.assertIs(p.system_profile, mock_profile)
+        ev = p.event_log.last(EventKind.SYS_AUDIT)
+        self.assertTrue(ev.details.get("secure_boot"))
+        self.assertTrue(ev.details.get("hvci_configured"))
+        self.assertFalse(ev.details.get("sedebug_privilege"))
+
+
 if __name__ == "__main__":
     unittest.main()
