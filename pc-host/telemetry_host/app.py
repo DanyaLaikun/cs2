@@ -19,6 +19,7 @@ from .gsi.maps import MapCatalog
 from .gsi.normalizer import normalize
 from .gsi.receiver import GsiReceiver
 from .hub import StateHub
+from .security import SecurityPolicy
 
 log = logging.getLogger("telemetry_host")
 
@@ -95,6 +96,7 @@ class TelemetryHost:
         self.bridge = BridgeServer(cfg.bridge, self.hub, radar_dir=cfg.radar_dir, web_dir=WEB_DIR)
         self._gsi_state: dict[str, Any] | None = None
         self._mem_reader = None
+        self.security = SecurityPolicy()
 
         if cfg.mem.enabled:
             if sys.platform != "win32":
@@ -104,7 +106,19 @@ class TelemetryHost:
                 self._mem_reader = MemReader(
                     poll_hz=cfg.mem.poll_hz,
                     on_state=self._on_mem_state,
+                    security_policy=self.security,
                 )
+                self.security.register_conflict_handler(self._on_security_conflict)
+
+    def _on_security_conflict(self) -> None:
+        """Invoked synchronously by SecurityPolicy when FACEIT AC is detected."""
+        log.warning("Security: FACEIT AC detected — stopping mem reader for compliance")
+        if self._mem_reader:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                loop.create_task(self._mem_reader.stop())
+            else:
+                asyncio.run(self._mem_reader.stop())
 
     def _on_payload(self, payload: dict[str, Any]) -> None:
         state = normalize(payload, self.maps)
@@ -126,11 +140,13 @@ class TelemetryHost:
             self.hub.publish(mem_state)
 
     async def start(self) -> None:
+        await self.security.start()
         await self.receiver.start()
         try:
             await self.bridge.start()
         except BaseException:
             await self.receiver.stop()
+            await self.security.stop()
             raise
         if self._mem_reader:
             await self._mem_reader.start()
@@ -140,6 +156,7 @@ class TelemetryHost:
             await self._mem_reader.stop()
         await self.bridge.stop()
         await self.receiver.stop()
+        await self.security.stop()
 
 
 async def run(cfg: Config) -> None:
@@ -170,6 +187,7 @@ def _log_banner(host: TelemetryHost) -> None:
     log.info("Maps           %d calibrated (%s)", len(host.maps), cfg.maps_file)
     log.info("Radar images   %d in %s", len(radars), cfg.radar_dir)
     log.info("USB tunnel     adb reverse tcp:%d tcp:%d", host.bridge.port, host.bridge.port)
+    log.info("Security       FACEIT compliance guard active  (scan every %.0fs)", host.security.SCAN_INTERVAL_S)
     if host._mem_reader:
         log.info("Mem reader     enabled @ %.0f Hz  augment_gsi=%s  (Windows cs2.exe)", cfg.mem.poll_hz, cfg.mem.augment_gsi)
 

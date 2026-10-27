@@ -55,6 +55,25 @@ class _MODULEENTRY32W(ctypes.Structure):
 
 # ── Process enumeration ────────────────────────────────────────────────────────
 
+def enum_process_names() -> list[str]:
+    """Return lowercased exe names of every running process (one snapshot pass)."""
+    snap = _k32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
+    if snap == _INVALID_HANDLE:
+        return []
+    entry = _PROCESSENTRY32()
+    entry.dwSize = ctypes.sizeof(_PROCESSENTRY32)
+    names: list[str] = []
+    try:
+        if _k32.Process32First(snap, ctypes.byref(entry)):
+            while True:
+                names.append(entry.szExeFile.decode("utf-8", errors="replace").lower())
+                if not _k32.Process32Next(snap, ctypes.byref(entry)):
+                    break
+    finally:
+        _k32.CloseHandle(snap)
+    return names
+
+
 def find_pid(exe_name: str) -> int | None:
     """Return PID of the first process whose exe name matches (case-insensitive)."""
     snap = _k32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)

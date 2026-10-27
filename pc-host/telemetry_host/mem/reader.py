@@ -52,6 +52,11 @@ from .winapi import (
     read_vec3,
 )
 
+try:
+    from ..security.policy import SecurityPolicy as _SecurityPolicy
+except ImportError:  # security module not available in test stubs
+    _SecurityPolicy = None  # type: ignore[assignment,misc]
+
 log = logging.getLogger("telemetry_host.mem")
 
 _PROCESS_NAME = "cs2.exe"
@@ -87,9 +92,11 @@ class MemReader:
         self,
         poll_hz: float = 20.0,
         on_state: Callable[[dict[str, Any]], None] | None = None,
+        security_policy: "_SecurityPolicy | None" = None,
     ) -> None:
-        self._hz       = max(1.0, min(poll_hz, 128.0))
-        self._on_state = on_state
+        self._hz             = max(1.0, min(poll_hz, 128.0))
+        self._on_state       = on_state
+        self._security       = security_policy
         self._task: asyncio.Task[None] | None = None
         self._ctx: _Ctx | None = None  # only touched inside the thread
         # State to avoid log spam when waiting for a match to start
@@ -144,6 +151,10 @@ class MemReader:
 
     def _read_state(self) -> list[_Player]:
         """Blocking: attach if needed, read entity list, return player list."""
+        if self._security is not None and not self._security.mem_read_allowed:
+            log.debug("MemReader: read skipped — blocked by security policy")
+            self._close_ctx()
+            return []
         if not self._ensure_ctx():
             return []
         ctx = self._ctx
@@ -187,6 +198,8 @@ class MemReader:
         # Reuse handle if we already have one open for this PID
         handle = self._handle_for_attach
         if handle is None:
+            if self._security is not None and not self._security.check_process_open(_PROCESS_NAME):
+                return False
             handle = open_process(pid)
             if handle is None:
                 log.warning(
