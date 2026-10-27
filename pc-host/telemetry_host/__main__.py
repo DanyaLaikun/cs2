@@ -22,6 +22,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--bridge-host", help="interface for the WebSocket bridge (0.0.0.0 for USB tethering / LAN)")
     parser.add_argument("--bridge-port", type=int, help="WebSocket bridge port")
     parser.add_argument("--max-hz", type=float, help="upper bound on state frames per second per client")
+    parser.add_argument("--mem-read", action="store_true", default=None,
+                        help="(Windows) read player positions directly from cs2.exe memory")
+    parser.add_argument("--mem-hz", type=float,
+                        help="memory poll rate in Hz when --mem-read is active (default: 20)")
     parser.add_argument("--log-level", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
     sub = parser.add_subparsers(dest="command", metavar="COMMAND")
     install = sub.add_parser("install-cfg", help="write gamestate_integration_cs2telemetry.cfg into the CS2 cfg folder")
@@ -49,11 +53,13 @@ def main(argv: list[str] | None = None) -> int:
         cfg = load_config(
             args.config,
             {
-                "gsi.port": args.gsi_port,
-                "bridge.host": args.bridge_host,
-                "bridge.port": args.bridge_port,
-                "bridge.max_hz": args.max_hz,
-                "log_level": args.log_level,
+                "gsi.port":       args.gsi_port,
+                "bridge.host":    args.bridge_host,
+                "bridge.port":    args.bridge_port,
+                "bridge.max_hz":  args.max_hz,
+                "mem.enabled":    args.mem_read,
+                "mem.poll_hz":    args.mem_hz,
+                "log_level":      args.log_level,
             },
         )
     except (OSError, ValueError) as exc:

@@ -50,7 +50,7 @@ Conventions:
 
 | Field | Type | Notes |
 |---|---|---|
-| `mode` | `"menu"` \| `"player"` \| `"spectator"` | `spectator` when the game sent `allplayers`, which it does only for spectators, GOTV and casters |
+| `mode` | `"menu"` \| `"player"` \| `"spectator"` | `spectator` when the game sent `allplayers` (spectators, GOTV, casters, demos, or a local/listen server you host); `player` in a live match, where GSI sends only your own player. `players` is never filtered by mode |
 | `provider` | `{name, steamId, version, ts}` | `steamId` is the local client |
 | `map` | object | Missing in menus |
 | `map.name` | string | Workshop paths are trimmed to the map name |

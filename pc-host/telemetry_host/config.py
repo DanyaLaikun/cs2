@@ -38,15 +38,31 @@ class BridgeConfig:
 
 
 @dataclass
+class MemConfig:
+    """Direct process-memory reader for CS2 (Windows only, optional).
+
+    When enabled the reader attaches to cs2.exe and polls the entity list at
+    poll_hz.  If augment_gsi is True (the default), memory positions are merged
+    into the latest GSI state so weapon/stats data is preserved.  When no GSI
+    payload has arrived yet the raw memory state is published directly.
+    """
+
+    enabled:     bool  = False
+    poll_hz:     float = 20.0
+    augment_gsi: bool  = True   # merge positions into GSI state; False = standalone
+
+
+@dataclass
 class Config:
     gsi: GsiConfig = field(default_factory=GsiConfig)
     bridge: BridgeConfig = field(default_factory=BridgeConfig)
+    mem: MemConfig = field(default_factory=MemConfig)
     radar_dir: Path = HOST_ROOT / "radars"
     maps_file: Path = HOST_ROOT / "maps.json"
     log_level: str = "INFO"
 
 
-_TOP_LEVEL_KEYS = {"gsi", "bridge", "radar_dir", "maps_file", "log_level"}
+_TOP_LEVEL_KEYS = {"gsi", "bridge", "mem", "radar_dir", "maps_file", "log_level"}
 
 
 def load_config(path: Path | None = None, overrides: dict[str, Any] | None = None) -> Config:
@@ -65,6 +81,7 @@ def load_config(path: Path | None = None, overrides: dict[str, Any] | None = Non
     cfg = Config()
     _apply(cfg.gsi, raw.get("gsi", {}), "gsi")
     _apply(cfg.bridge, raw.get("bridge", {}), "bridge")
+    _apply(cfg.mem, raw.get("mem", {}), "mem")
     if "radar_dir" in raw:
         cfg.radar_dir = _resolve(base, raw["radar_dir"])
     if "maps_file" in raw:
@@ -82,7 +99,11 @@ def load_config(path: Path | None = None, overrides: dict[str, Any] | None = Non
             cfg.log_level = str(value).upper()
             continue
         section, _, name = dotted.partition(".")
-        _apply(getattr(cfg, section), {name: value}, section)
+        target = getattr(cfg, section, None)
+        if target is None:
+            log.warning("config: override references unknown section %r", section)
+            continue
+        _apply(target, {name: value}, section)
 
     _validate(cfg)
     return cfg
@@ -120,3 +141,5 @@ def _validate(cfg: Config) -> None:
         raise ValueError("config: bridge.heartbeat_sec must be positive")
     if cfg.bridge.max_clients < 1:
         raise ValueError("config: bridge.max_clients must be at least 1")
+    if cfg.mem.poll_hz <= 0:
+        raise ValueError("config: mem.poll_hz must be positive")

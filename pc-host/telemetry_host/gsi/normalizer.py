@@ -33,10 +33,15 @@ def normalize(payload: dict[str, Any], maps: MapCatalog | None = None) -> dict[s
         merged = players.setdefault(focus, {})
         merged.update({k: v for k, v in own.items() if v is not None})
 
+    # The players list is never filtered by mode: it is always everyone the game reported
+    # (allplayers) merged with the focus player. `mode` only labels *why* we have that data.
+    # CS2 fills allplayers whenever the client sees the whole world - spectators, GOTV, casters,
+    # demos, and a local/listen server you host (offline-with-bots or a practice cfg). A live
+    # Valve match sends only your own `player`, so there is no legitimate all-players source then.
     if not raw_map:
         mode = "menu"
     elif raw_all:
-        mode = "spectator"  # the game only sends allplayers to spectators, GOTV and casters
+        mode = "spectator"
     else:
         mode = "player"
 

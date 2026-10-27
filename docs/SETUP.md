@@ -263,7 +263,7 @@ A full 10-player spectator state is about 7 KB, so 20 Hz is roughly 140 KB/s, a 
 | `adb devices` shows `unauthorized` | Accept the prompt on the phone. If it never appears, revoke USB debugging authorizations and replug |
 | `adb devices` is empty | Use a data cable, try another USB port, and set the phone's USB mode to "File transfer" |
 | App: `Host rejected the bridge token` | Enter the same `bridge.token` in the app's endpoint dialog |
-| Minimap shows only you | You're in a live match, so that's all GSI sends. Spectate or open a demo for the full picture |
+| Minimap shows only you | A live Valve match sends only your own player over GSI, by design. To see everyone: spectate (die and watch, or a spectator slot), watch GOTV or a demo, or host a local/listen server (offline-with-bots or a practice cfg) — the radar then shows every player in any mode |
 | Markers sit off the walls | The map's calibration in `maps.json` is out of date. Copy `pos_x`, `pos_y` and `scale` from its overview file |
 | "No radar image for de_x" | Export that map's radar into `pc-host/radars/` (section 4) |
 | Markers stutter | Lower `throttle` in the cfg, or check `framesDropped` in `/health`. Drops mean the phone isn't reading fast enough |

@@ -1,8 +1,15 @@
-"""Wires the pipeline together: GSI receiver -> normalizer -> state hub -> WebSocket bridge."""
+"""Wires the pipeline together: GSI receiver -> normalizer -> state hub -> WebSocket bridge.
+
+Optional mem reader path (--mem-read / config mem.enabled=true):
+  MemReader polls cs2.exe entity list at mem.poll_hz and calls _on_mem_state.
+  When augment_gsi=True the memory positions are merged into the latest GSI state
+  so weapon/round data is preserved; when False the raw memory state is published.
+"""
 from __future__ import annotations
 
 import asyncio
 import logging
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +25,67 @@ log = logging.getLogger("telemetry_host")
 WEB_DIR = Path(__file__).resolve().parent / "web"
 
 
+def _merge_mem_positions(gsi_state: dict[str, Any], mem_players: list[dict[str, Any]]) -> dict[str, Any]:
+    """Merge mem players into gsi_state.
+
+    - GSI players that match a mem entry (by steamid, then name) get their
+      pos/yaw/health/alive updated from memory.
+    - Mem players with no GSI counterpart are appended directly (GSI only
+      reports the local player, so all opponents come exclusively from memory).
+    """
+    if not mem_players:
+        return gsi_state
+
+    by_sid: dict[str, dict] = {}
+    by_name: dict[str, dict] = {}
+    for mp in mem_players:
+        sid = mp.get("steamid")
+        if sid:
+            by_sid[sid] = mp
+        n = (mp.get("name") or "").lower()
+        if n:
+            by_name[n] = mp
+
+    matched_mem_keys: set[str] = set()
+
+    def _update(gp: dict[str, Any]) -> dict[str, Any]:
+        # GSI stores the steamid under "id", not "steamid"; try both.
+        gp_sid = gp.get("steamid") or gp.get("id") or ""
+        mp = by_sid.get(gp_sid) or by_name.get((gp.get("name") or "").lower())
+        if not mp:
+            return gp
+        matched_mem_keys.add(mp.get("steamid") or (mp.get("name") or "").lower())
+        out = dict(gp)
+        for k in ("pos", "yaw", "hp"):  # update position/heading and health from mem
+            if k in mp:
+                out[k] = mp[k]
+        return out
+
+    updated_gsi = [_update(p) for p in gsi_state.get("players", [])]
+
+    # Append mem-only players (opponents — GSI never reports them in a live match).
+    # Each entry needs "id" so the Android's Player(val id: String) can deserialize.
+    for mp in mem_players:
+        match_key = mp.get("steamid") or (mp.get("name") or "").lower()
+        if match_key not in matched_mem_keys:
+            mem_id = mp.get("steamid") or f"mem_{(mp.get('name') or 'unknown').lower()}"
+            updated_gsi.append({
+                "id":   mem_id,
+                "team": mp.get("team", ""),
+                "hp":   mp.get("hp", 0),
+                "pos":  mp.get("pos", [0, 0, 0]),
+                "yaw":  mp.get("yaw", 0.0),
+                **({"name": mp["name"]} if mp.get("name") else {}),
+                **({"steamid": mp["steamid"]} if mp.get("steamid") else {}),
+            })
+
+    return {
+        **gsi_state,
+        "players": updated_gsi,
+        "source": "gsi+mem",
+    }
+
+
 class TelemetryHost:
     def __init__(self, cfg: Config) -> None:
         self.cfg = cfg
@@ -25,9 +93,37 @@ class TelemetryHost:
         self.hub = StateHub()
         self.receiver = GsiReceiver(cfg.gsi, self._on_payload)
         self.bridge = BridgeServer(cfg.bridge, self.hub, radar_dir=cfg.radar_dir, web_dir=WEB_DIR)
+        self._gsi_state: dict[str, Any] | None = None
+        self._mem_reader = None
+
+        if cfg.mem.enabled:
+            if sys.platform != "win32":
+                log.warning("mem reader is Windows-only; ignoring mem.enabled=true")
+            else:
+                from .mem import MemReader
+                self._mem_reader = MemReader(
+                    poll_hz=cfg.mem.poll_hz,
+                    on_state=self._on_mem_state,
+                )
 
     def _on_payload(self, payload: dict[str, Any]) -> None:
-        self.hub.publish(normalize(payload, self.maps))
+        state = normalize(payload, self.maps)
+        self._gsi_state = state
+        # When the mem reader is active it publishes merged states, so skip the
+        # raw GSI publish here — it has no opponent positions and causes flickering.
+        if not self._mem_reader:
+            self.hub.publish(state)
+
+    def _on_mem_state(self, mem_state: dict[str, Any]) -> None:
+        mem_players: list[dict] = mem_state.get("players", [])
+        if self._gsi_state and self.cfg.mem.augment_gsi:
+            merged = _merge_mem_positions(self._gsi_state, mem_players)
+            self.hub.publish(merged)
+        elif not self._gsi_state:
+            self.hub.publish(mem_state)
+        # If gsi_state exists and augment_gsi=False: mem publishes stand-alone
+        elif not self.cfg.mem.augment_gsi:
+            self.hub.publish(mem_state)
 
     async def start(self) -> None:
         await self.receiver.start()
@@ -36,8 +132,12 @@ class TelemetryHost:
         except BaseException:
             await self.receiver.stop()
             raise
+        if self._mem_reader:
+            await self._mem_reader.start()
 
     async def stop(self) -> None:
+        if self._mem_reader:
+            await self._mem_reader.stop()
         await self.bridge.stop()
         await self.receiver.stop()
 
@@ -68,6 +168,8 @@ def _log_banner(host: TelemetryHost) -> None:
     log.info("Maps           %d calibrated (%s)", len(host.maps), cfg.maps_file)
     log.info("Radar images   %d in %s", len(radars), cfg.radar_dir)
     log.info("USB tunnel     adb reverse tcp:%d tcp:%d", host.bridge.port, host.bridge.port)
+    if host._mem_reader:
+        log.info("Mem reader     enabled @ %.0f Hz  augment_gsi=%s  (Windows cs2.exe)", cfg.mem.poll_hz, cfg.mem.augment_gsi)
 
 
 async def _log_stats(host: TelemetryHost, interval: float = 30.0) -> None:

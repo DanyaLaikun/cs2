@@ -149,7 +149,11 @@ private fun InfoColumn(state: TelemetryState?, modifier: Modifier) {
         ModeBanner(state.mode)
         state.map?.history?.takeIf { it.isNotEmpty() }?.let { RoundHistoryStrip(it) }
         state.focusPlayer?.let { FocusPlayerCard(it, state.mode) }
-        if (state.mode == GameMode.SPECTATOR) {
+        // Rosters and economy follow the data, not the mode label: they appear whenever the feed
+        // carries more than the focus player — a spectator / GOTV / demo feed, or a local practice
+        // server you host — not only when the mode happens to be "spectator". A live Valve match
+        // sends only your own player, so there is nothing else to list and they stay hidden.
+        if (state.players.size > 1) {
             val ct = state.teamPlayers(Team.CT)
             val t = state.teamPlayers(Team.T)
             EconomyRow(ct, t, state.map?.ct, state.map?.t)
