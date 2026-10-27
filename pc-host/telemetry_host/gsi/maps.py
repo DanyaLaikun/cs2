@@ -49,6 +49,7 @@ class MapCatalog:
             )
             if best:
                 return self._radar[best]
+        log.info("maps: no calibration for %r (variants tried: %s)", map_name, _name_variants(map_name.lower()))
         return None
 
     def __len__(self) -> int:
