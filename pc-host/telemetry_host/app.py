@@ -147,9 +147,11 @@ async def run(cfg: Config) -> None:
     await host.start()
     _log_banner(host)
     stats = asyncio.create_task(_log_stats(host))
+    adb = asyncio.create_task(_adb_loop(host.bridge.port))
     try:
         await asyncio.Event().wait()  # run until cancelled (Ctrl+C)
     finally:
+        adb.cancel()
         stats.cancel()
         await host.stop()
         log.info("stopped")
@@ -170,6 +172,25 @@ def _log_banner(host: TelemetryHost) -> None:
     log.info("USB tunnel     adb reverse tcp:%d tcp:%d", host.bridge.port, host.bridge.port)
     if host._mem_reader:
         log.info("Mem reader     enabled @ %.0f Hz  augment_gsi=%s  (Windows cs2.exe)", cfg.mem.poll_hz, cfg.mem.augment_gsi)
+
+
+async def _adb_loop(port: int, interval: float = 60.0) -> None:
+    """Run `adb reverse` once immediately, then every minute to restore the tunnel after USB re-plug."""
+    while True:
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                "adb", "reverse", f"tcp:{port}", f"tcp:{port}",
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
+            )
+            await asyncio.wait_for(proc.wait(), timeout=5.0)
+            if proc.returncode == 0:
+                log.debug("adb reverse tcp:%d tcp:%d OK", port, port)
+        except (FileNotFoundError, OSError):
+            return  # adb not installed — no point retrying
+        except asyncio.TimeoutError:
+            pass
+        await asyncio.sleep(interval)
 
 
 async def _log_stats(host: TelemetryHost, interval: float = 30.0) -> None:

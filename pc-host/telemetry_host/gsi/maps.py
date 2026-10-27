@@ -36,7 +36,18 @@ class MapCatalog:
         return cls(data)
 
     def lookup(self, map_name: str) -> dict[str, Any] | None:
-        return self._radar.get(map_name.lower())
+        key = map_name.lower()
+        exact = self._radar.get(key)
+        if exact is not None:
+            return exact
+        # Prefix fallback for workshop variants: "de_mirage_ce" → "de_mirage".
+        # Require an underscore boundary so "de_mi" does not match "de_mirage".
+        best = max(
+            (k for k in self._radar if key.startswith(k + "_")),
+            key=len,
+            default=None,
+        )
+        return self._radar[best] if best else None
 
     def __len__(self) -> int:
         return len(self._radar)
