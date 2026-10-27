@@ -20,6 +20,15 @@ Usage::
 from __future__ import annotations
 
 from .events import EventKind, SecurityEvent, SecurityEventLog
+from .integrity import (
+    FunctionSeal,
+    IntegrityError,
+    IntegrityStatus,
+    cross_verify_audit_system,
+    dll_available,
+    seal_audit_system,
+    verify_audit_system,
+)
 from .policy import SecurityPolicy
 from .sysaudit import SystemSecurityProfile, audit_system
 
@@ -30,4 +39,12 @@ __all__ = [
     "EventKind",
     "SystemSecurityProfile",
     "audit_system",
+    # integrity guard
+    "FunctionSeal",
+    "IntegrityError",
+    "IntegrityStatus",
+    "seal_audit_system",
+    "verify_audit_system",
+    "cross_verify_audit_system",
+    "dll_available",
 ]
