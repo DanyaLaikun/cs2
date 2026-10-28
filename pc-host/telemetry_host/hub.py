@@ -16,12 +16,20 @@ class StateHub:
     """
 
     def __init__(self) -> None:
-        self.changed = asyncio.Event()
+        # Created lazily on first use so construction never depends on an
+        # ambient event loop (asyncio.Event() needs a running loop on Py<3.10).
+        self._changed = None
         self.seq = 0
         self.payloads = 0
         self._body: str | None = None
         self._message: str | None = None
         self._last_gsi: float | None = None
+
+    @property
+    def changed(self) -> asyncio.Event:
+        if self._changed is None:
+            self._changed = asyncio.Event()
+        return self._changed
 
     def publish(self, state: dict[str, Any]) -> bool:
         """Store a new state; returns False when it is identical to the current one."""
