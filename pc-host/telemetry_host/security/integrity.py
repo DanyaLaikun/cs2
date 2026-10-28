@@ -253,8 +253,24 @@ def integrity_level_name() -> Optional[str]:
 # ── FunctionSeal — bytecode-level tamper detection ────────────────────────────
 
 def _get_bytecode(fn: types.FunctionType) -> bytes:
-    """Extract the raw bytecode of a Python function."""
-    return bytes(fn.__code__.co_code)
+    """Build a canonical byte serialization of a function's code object.
+
+    Includes co_code plus the constant and name tables, so swaps that keep the
+    instruction stream identical but change constants (e.g. ``return 42`` →
+    ``return 99``) are still detected — those values live in co_consts, not
+    co_code.
+    """
+    c = fn.__code__
+    parts = [bytes(c.co_code)]
+    for const in c.co_consts:
+        if isinstance(const, types.CodeType):
+            continue  # nested code objects carry their own identity
+        try:
+            parts.append(repr(const).encode("utf-8"))
+        except Exception:
+            parts.append(b"")
+    parts.extend(name.encode("utf-8") for name in c.co_names)
+    return b"\x00".join(parts) or b"\x00"
 
 
 class FunctionSeal:
