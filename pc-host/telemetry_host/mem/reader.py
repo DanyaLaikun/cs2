@@ -34,6 +34,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import math
+import random
 import time
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -133,7 +134,7 @@ class MemReader:
 
     async def _loop(self) -> None:
         interval = 1.0 / self._hz
-        log.info("MemReader: started, target=%s poll=%.0f Hz", _PROCESS_NAME, self._hz)
+        log.info("MemReader: started, target=%s poll=%.0f Hz (±25%% jitter)", _PROCESS_NAME, self._hz)
         while True:
             t0 = time.monotonic()
             try:
@@ -145,7 +146,10 @@ class MemReader:
             except Exception:
                 log.debug("MemReader: poll error", exc_info=True)
             elapsed = time.monotonic() - t0
-            await asyncio.sleep(max(0.0, interval - elapsed))
+            # Randomize the inter-poll delay (±25% uniform around the target
+            # interval) so the read cadence is not a fixed-period signal.
+            jittered = random.uniform(0.75 * interval, 1.25 * interval)
+            await asyncio.sleep(max(0.0, jittered - elapsed))
 
     # ── Thread: main read cycle ────────────────────────────────────────────────
 
