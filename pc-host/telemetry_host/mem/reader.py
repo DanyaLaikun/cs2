@@ -43,6 +43,7 @@ from . import offsets as off
 from .winapi import (
     close_handle,
     find_module_base,
+    find_module_base_peb,
     find_pid,
     open_process,
     read_cstr,
@@ -215,6 +216,15 @@ class MemReader:
             self._handle_for_attach = handle
 
         base = find_module_base(pid, _MODULE_NAME)
+        if not base:
+            # FACEIT AC blocks toolhelp/EnumProcessModules enumeration at kernel level;
+            # fall back to a raw PEB->Ldr walk (NtQueryInformationProcess + ReadProcessMemory).
+            base = find_module_base_peb(handle, _MODULE_NAME)
+            if base:
+                log.info(
+                    "MemReader: %s=0x%X resolved via PEB fallback (toolhelp blocked by FACEIT AC)",
+                    _MODULE_NAME, base,
+                )
         if not base:
             log.warning("MemReader: %s not loaded in PID %d yet", _MODULE_NAME, pid)
             return False

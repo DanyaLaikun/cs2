@@ -116,6 +116,74 @@ def find_module_base(pid: int, module_name: str) -> int | None:
         _k32.CloseHandle(snap)
 
 
+# ── PEB-based module resolution (FACEIT AC fallback) ───────────────────────────
+
+_PBI_SIZE = 0x28              # sizeof(PROCESS_BASIC_INFORMATION), x64
+_PBI_PEB_OFFSET = 8           # PEB pointer field inside PROCESS_BASIC_INFORMATION, x64
+_PEB_LDR_OFFSET = 0x18        # PPEB->Ldr, x64
+_LDR_ENTRY_BASE = 0x30        # LDR_DATA_TABLE_ENTRY.BaseAddress, x64
+_LDR_NAME_BUFFER = 0x80       # LDR_DATA_TABLE_ENTRY.BaseDllName.Buffer pointer, x64
+_LDR_MAX_ENTRIES = 512
+
+
+def _read_peb_address(h: int) -> int | None:
+    """Fetch the PEB base address via NtQueryInformationProcess(ProcessBasicInformation)."""
+    ntdll = ctypes.windll.ntdll  # type: ignore[attr-defined]
+    info = ctypes.create_string_buffer(_PBI_SIZE)
+    ret_len = wt.DWORD()
+    status = ntdll.NtQueryInformationProcess(h, 0, info, _PBI_SIZE, ctypes.byref(ret_len))
+    if status != 0 or ret_len.value < _PBI_PEB_OFFSET + 8:
+        return None
+    peb = struct.unpack_from("<Q", info.raw, _PBI_PEB_OFFSET)[0]
+    return peb or None
+
+
+def read_wcstr(h: int, addr: int, max_chars: int = 260) -> str:
+    """Read a null-terminated UTF-16LE (wide) string from process memory."""
+    b = read_bytes(h, addr, max_chars * 2)
+    if not b:
+        return ""
+    nul = b.find(b"\x00\x00")
+    raw = b[:nul] if nul >= 0 else b
+    if len(raw) % 2 == 1:
+        raw = raw[:-1]
+    return raw.decode("utf-16-le", errors="replace").strip()
+
+
+def find_module_base_peb(h: int, module_name: str) -> int | None:
+    """Resolve a module's base address by walking PEB->Ldr in target process memory.
+
+    Uses only NtQueryInformationProcess + ReadProcessMemory — no Toolhelp32 or
+    EnumProcessModules calls — so it keeps working when FACEIT AC blocks those
+    enumeration APIs at kernel level for cs2.exe. x64-only (cs2.exe is 64-bit).
+    """
+    peb = _read_peb_address(h)
+    if not peb:
+        return None
+    ldr = read_u64(h, peb + _PEB_LDR_OFFSET)
+    if not ldr:
+        return None
+
+    target = module_name.lower()
+    current = read_u64(h, ldr)  # Flink of the InLoadOrderModuleList head
+    if not current:
+        return None
+
+    for _ in range(_LDR_MAX_ENTRIES):
+        if current == ldr or current < 0x10000:
+            break
+        base = read_u64(h, current + _LDR_ENTRY_BASE)
+        name_ptr = read_u64(h, current + _LDR_NAME_BUFFER)
+        name = read_wcstr(h, name_ptr) if name_ptr else ""
+        if name.lower() == target:
+            return base or None
+        nxt = read_u64(h, current)  # Flink of the next entry (offset 0 in Ldr entries)
+        if not nxt:
+            break
+        current = nxt
+    return None
+
+
 # ── Handle management ──────────────────────────────────────────────────────────
 
 def open_process(pid: int) -> int | None:
