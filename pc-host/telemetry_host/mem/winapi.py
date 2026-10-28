@@ -122,7 +122,10 @@ _PBI_SIZE = 0x28              # sizeof(PROCESS_BASIC_INFORMATION), x64
 _PBI_PEB_OFFSET = 8           # PEB pointer field inside PROCESS_BASIC_INFORMATION, x64
 _PEB_LDR_OFFSET = 0x18        # PPEB->Ldr, x64
 _LDR_ENTRY_BASE = 0x30        # LDR_DATA_TABLE_ENTRY.BaseAddress, x64
-_LDR_NAME_BUFFER = 0x80       # LDR_DATA_TABLE_ENTRY.BaseDllName.Buffer pointer, x64
+_LDR_NAME_BUFFERS     = (          # LDR_DATA_TABLE_ENTRY name Buffer pointers, x64
+    0x60,                          #   BaseDllName.Buffer — module file name
+    0x50,                          #   FullDllName.Buffer — full path; compare basename
+)
 _LDR_MAX_ENTRIES = 512
 
 
@@ -173,10 +176,21 @@ def find_module_base_peb(h: int, module_name: str) -> int | None:
         if current == ldr or current < 0x10000:
             break
         base = read_u64(h, current + _LDR_ENTRY_BASE)
-        name_ptr = read_u64(h, current + _LDR_NAME_BUFFER)
-        name = read_wcstr(h, name_ptr) if name_ptr else ""
-        if name.lower() == target:
-            return base or None
+
+        for name_off in _LDR_NAME_BUFFERS:
+            name_ptr = read_u64(h, current + name_off)
+            if not name_ptr:
+                continue
+            name = read_wcstr(h, name_ptr, max_chars=512).strip().lower()
+            if not name:
+                continue
+            # FullDllName.Buffer may contain a full path; compare its basename.
+            candidate = (
+                name.rsplit("\\", 1)[-1]
+                if name_off == _LDR_NAME_BUFFERS[1] else name
+            )
+            if candidate == target and base:
+                return base
         nxt = read_u64(h, current)  # Flink of the next entry (offset 0 in Ldr entries)
         if not nxt:
             break
